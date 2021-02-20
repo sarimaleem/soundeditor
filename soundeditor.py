@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from functools import partial
 import os
+from tkinter.constants import W
 import winsound
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -26,12 +27,16 @@ window_types = [
     'barthann'
 ]
 
-
 class SoundEditor:
     def __init__(self) -> None:
         self.window = tk.Tk()
-        # TODO remove this in production
-        self.curr_dir = os.getcwd() + "/wavfiles"
+        self.curr_dir = os.getcwd()
+        # for testing purposes so i don't have to navigate everytime
+        # self.curr_dir = os.getcwd() + "/wavfiles"
+        self.save_dir = tk.StringVar()
+        self.save_dir.set(os.getcwd())
+        # for testing purposes so i don't have to navigate everytime
+        # self.save_dir.set(os.getcwd() + "/savedir")
         self.start_trim = tk.DoubleVar()
         self.end_trim = tk.DoubleVar()
         self.segment_length = tk.DoubleVar()
@@ -89,7 +94,8 @@ class SoundEditor:
         self.current_file = filename
         editor_window = tk.Frame(self.window)
         self.editor_window = editor_window
-
+        self.save_file_name = tk.StringVar()
+        self.save_file_name.set(filename)
         # button to play the sound
         def play(): return winsound.PlaySound(
             self.curr_dir + "/" + filename, winsound.SND_FILENAME)
@@ -110,19 +116,34 @@ class SoundEditor:
 
         tk.Label(editor_window, text="window type").pack()
         tk.OptionMenu(editor_window, self.window_type, *window_types).pack()
-        
+
         tk.Label(editor_window, text="segment length (seconds)").pack()
         tk.Scale(editor_window, from_=0,
                  to=1, variable=self.segment_length, length=500, resolution=0.01, orient=tk.HORIZONTAL).pack()
-        
+
         tk.Label(editor_window, text="overlap (% of segment length)").pack()
         tk.Scale(editor_window, from_=0,
                  to=100, variable=self.overlap, length=500, resolution=1, orient=tk.HORIZONTAL).pack()
 
-
+        #this is so disgusting too many widgets to keep track of lmao
         tk.Button(editor_window, text="create graph",
                   command=self.create_graph_editor).pack()
+
+        tk.Label(editor_window, textvariable=self.save_dir).pack()
+        tk.Button(
+            self.editor_window, text="select save folder", command=self.set_save_dir).pack()
+        tk.Label(editor_window, text="save trimmed file:").pack()
+        tk.Entry(editor_window, width=50,textvariable=self.save_file_name).pack()
+        tk.Button(editor_window, text="save", command=self.save_file
+                  ).pack()
+
         editor_window.grid(row=2, column=2)
+
+    def save_file(self):
+        start = int(self.sample_rate * self.start_trim.get())
+        end = int(self.sample_rate * self.end_trim.get())
+        save_arr = self.data[start:end]
+        wavfile.write(self.save_dir.get() + "/" + self.save_file_name.get(), self.sample_rate, save_arr)
 
     def create_graph_editor(self):
         if(hasattr(self, "graph_fig")):
@@ -152,8 +173,10 @@ class SoundEditor:
     def get_folder(self):
         self.curr_dir = filedialog.askdirectory()
         self.list_files()
-
+        
+    def set_save_dir(self):
+        self.save_dir.set(filedialog.askdirectory()) 
 
 gui = SoundEditor()
 
-# Create the image display thing
+# this file is way too long

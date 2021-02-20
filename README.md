@@ -3,4 +3,4 @@
 Dependencies to install:
 - numpy
 - scipy
--  matplotlib
+- matplotlib
